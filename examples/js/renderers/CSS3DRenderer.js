@@ -1,6 +1,7 @@
 /**
  * Based on http://www.emagix.net/academic/mscs-project/item/camera-sync-with-css3-and-webgl-threejs
  * @author mrdoob / http://mrdoob.com/
+ * @author mark lundin / http://mark-lundin.com/
  */
 
 THREE.CSS3DObject = function ( element ) {
@@ -119,30 +120,29 @@ THREE.CSS3DRenderer = function () {
 
 	};
 
-	var getObjectCSSMatrix = function ( matrix ) {
+	var getObjectCSSTransform = function(){
 
-		var elements = matrix.elements;
+		var position = new THREE.Vector3(),
+			scale 	 = new THREE.Vector3(),
+			euler 	 = new THREE.Euler(),
+			quaternion = new THREE.Quaternion(),
+			style;
 
-		return 'translate3d(-50%,-50%,0) matrix3d(' +
-			epsilon( elements[ 0 ] ) + ',' +
-			epsilon( elements[ 1 ] ) + ',' +
-			epsilon( elements[ 2 ] ) + ',' +
-			epsilon( elements[ 3 ] ) + ',' +
-			epsilon( - elements[ 4 ] ) + ',' +
-			epsilon( - elements[ 5 ] ) + ',' +
-			epsilon( - elements[ 6 ] ) + ',' +
-			epsilon( - elements[ 7 ] ) + ',' +
-			epsilon( elements[ 8 ] ) + ',' +
-			epsilon( elements[ 9 ] ) + ',' +
-			epsilon( elements[ 10 ] ) + ',' +
-			epsilon( elements[ 11 ] ) + ',' +
-			epsilon( elements[ 12 ] ) + ',' +
-			epsilon( elements[ 13 ] ) + ',' +
-			epsilon( elements[ 14 ] ) + ',' +
-			epsilon( elements[ 15 ] ) +
-		')';
+		euler._quaternion = quaternion;
+		quaternion._euler = euler;
 
-	};
+		return function ( matrix ) {
+
+			matrix.decompose( position, quaternion, scale );
+			euler.setFromQuaternion( quaternion );
+
+			return 'translate3d(-50%,-50%,0) translate3d(' + epsilon(position.x) + 'px, ' + epsilon(position.y) + 'px, ' + epsilon(position.z) + 'px) '
+					+ 'rotateX(' + epsilon(euler.x) + 'rad) rotateY(' + epsilon(euler.y) + 'rad) rotateZ(' + epsilon(euler.z) + 'rad) '
+					+ 'scale3d(' + epsilon(scale.x) + ', ' + epsilon(-scale.y) + ', ' + epsilon(scale.z) + ')';
+
+		};
+
+	}()
 
 	var renderObject = function ( object, camera ) {
 
@@ -164,11 +164,11 @@ THREE.CSS3DRenderer = function () {
 				matrix.elements[ 11 ] = 0;
 				matrix.elements[ 15 ] = 1;
 
-				style = getObjectCSSMatrix( matrix );
+				style = getObjectCSSTransform( matrix );
 
 			} else {
 
-				style = getObjectCSSMatrix( object.matrixWorld );
+				style = getObjectCSSTransform( object.matrixWorld );
 
 			}
 
